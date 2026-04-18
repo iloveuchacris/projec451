@@ -22,3 +22,5 @@ const styles = StyleSheet.create({
 });
 
 export default SplashScreen;
+
+///////// ตัวอย่างโค้ดสำหรับหน้าเลือกบทบาท (SelectRole) และหน้าเข้าสู่ระบบ (LoginScreen) ที่มีการปรับปรุงตามที่คุณต้องการ
