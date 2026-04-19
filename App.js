@@ -18,6 +18,7 @@ import BookingScreen from './components/screens/BBBookingScreen';
 import BookingRasScreen from './components/screens/BBBookingRasScreen';
 import BookingSummaryScreen from './components/screens/BCBookingSummaryScreen';
 import MenuRasScreen from './components/screens/BCMenuRasScreen';
+import SettingsRas from './components/screens/BDSettingsRasScreen';
 /*import DepositScreen from './components/screens/BDDepositScreen';
 import QRSelectionScreen from './components/screens/BEQRSelectionScreen';
 import BookingSuccessScreen from './components/screens/BFBookingSuccessScreen';
@@ -49,6 +50,7 @@ export default function App() {
         <Stack.Screen name="BookingRas" component={BookingRasScreen} />
         <Stack.Screen name="BookingSummary" component={BookingSummaryScreen} />
         <Stack.Screen name="MenuRas" component={MenuRasScreen} />
+        <Stack.Screen name="BDSettingsRasScreen" component={SettingsRas} />
         {/*<Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="QRSelection" component={QRSelectionScreen} />
         <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
