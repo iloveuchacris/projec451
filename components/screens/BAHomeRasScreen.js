@@ -1,60 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useIsFocused } from '@react-navigation/native'; 
-import { supabase } from '../data/supabase';
 
-export default function HomeRasScreen({ route, navigation }) {
-  // 1. รับ restaurantId จากหน้า Login
-  const { restaurantId } = route.params || {}; 
-  
-  const isFocused = useIsFocused(); 
+// --- ข้อมูลจำลองตำแหน่งโต๊ะ ---
+const defaultTables = [
+  { id: 'B1', type: 'barSeat', top_position: '22%', left_position: '15%' },
+  { id: 'T1', type: 'long', top_position: '20%', left_position: '35%' },
+  { id: 'T2', type: 'long', top_position: '55%', left_position: '35%' },
+  { id: 'T3', type: 'square', top_position: '18%', left_position: '58%' },
+  { id: 'T4', type: 'square', top_position: '40%', left_position: '58%' },
+  { id: 'T5', type: 'circle', top_position: '82%', left_position: '10%' },
+  { id: 'T10', type: 't10', bottom_position: '0', right_position: '0' },
+];
+
+const defaultDecorations = [
+  { id: 'stage', type: 'stage', label: 'STAGE / PERFORMANCE', top_position: '3%', left_position: '20%', width: '50%' },
+  { id: 'line_left', type: 'vline', top_position: '25%', left_position: '10%', height: '50%' },
+  { id: 'text_bar_left', type: 'vtext_red', label: 'BAR AREA', top_position: '52%', left_position: '2%' },
+  { id: 'text_city_view', type: 'text_stacked', label: 'CITY\nVIEW\nPANO\nRAMA', top_position: '48%', left_position: '5%' },
+  { id: 'line_right', type: 'vline', top_position: '2%', right_position: '5%', height: '12%' },
+  { id: 'text_bar_right', type: 'text_red', label: 'BAR\nAREA', top_position: '3%', right_position: '8%' },
+  { id: 'wc', type: 'wc', top_position: '40%', right_position: '2%' },
+  { id: 'door', type: 'door', label: 'DOOR', bottom_position: '2%', left_position: '30%' },
+];
+
+export default function BAHomeRasScreen({ navigation }) {
   const [isOpen, setIsOpen] = useState(true);
-  const [tables, setTables] = useState([]);
-  const [decorations, setDecorations] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!restaurantId) {
-      Alert.alert('Error', 'ไม่พบข้อมูลร้านค้า กรุณาล็อกอินใหม่');
-      navigation.replace('LoginRes');
-      return;
-    }
-
-    if (isFocused) {
-      fetchFloorPlan();
-    }
-  }, [isFocused, restaurantId]);
-
-  const fetchFloorPlan = async () => {
-    try {
-      setLoading(true);
-      
-      // ดึงข้อมูลโต๊ะ
-      const { data: tableData, error: tableError } = await supabase
-        .from('restaurant_tables')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .order('id', { ascending: true });
-
-      if (tableError) throw tableError;
-
-      // ดึงข้อมูลของตกแต่ง (Decorations)
-      const { data: decorData, error: decorError } = await supabase
-        .from('restaurant_decorations')
-        .select('*')
-        .eq('restaurant_id', restaurantId);
-
-      if (decorError) throw decorError;
-
-      setTables(tableData || []);
-      setDecorations(decorData || []);
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getPos = (val) => {
     if (val === null || val === undefined) return undefined;
@@ -62,26 +33,17 @@ export default function HomeRasScreen({ route, navigation }) {
     return strVal.includes('%') ? strVal : parseFloat(strVal);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'occupied': return '#F44336'; 
-      case 'reserved': return '#FFC107'; 
-      case 'available': return '#1A1A1C'; 
-      default: return '#1A1A1C';
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* 1. Header Section */}
+      {/* 1. Header & Restaurant Status */}
       <View style={styles.headerSection}>
         <View style={styles.titleRow}>
-          <Text style={styles.restaurantName}>Dashboard</Text>
+          <Text style={styles.restaurantName}>BLUE by Alain Ducasse</Text>
           <TouchableOpacity style={styles.notificationBtn}>
             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.subText}>สถานะโต๊ะอาหารแบบ Real-time</Text>
+        <Text style={styles.subText}>นี่คือผลการดำเนินงานของร้านอาหารคุณในคืนนี้</Text>
 
         <View style={styles.statusToggleContainer}>
           <TouchableOpacity 
@@ -99,112 +61,91 @@ export default function HomeRasScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* 2. Legend */}
+      {/* 2. Status Legend */}
       <View style={styles.legendContainer}>
-        <Text style={styles.legendTitle}>Floor Plan</Text>
+        <Text style={styles.legendTitle}>Main Dining</Text>
         <View style={styles.statusRow}>
-          <View style={styles.statusItem}><View style={[styles.dot, { backgroundColor: '#1A1A1C' }]} /><Text style={styles.statusLabel}>ว่าง</Text></View>
-          <View style={styles.statusItem}><View style={[styles.dot, { backgroundColor: '#FFC107' }]} /><Text style={styles.statusLabel}>จอง</Text></View>
-          <View style={styles.statusItem}><View style={[styles.dot, { backgroundColor: '#F44336' }]} /><Text style={styles.statusLabel}>ไม่ว่าง</Text></View>
+          <View style={styles.statusItem}>
+            <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
+            <Text style={styles.statusLabel}>Avail</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <View style={[styles.dot, { backgroundColor: '#FFC107' }]} />
+            <Text style={styles.statusLabel}>Rsvd</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <View style={[styles.dot, { backgroundColor: '#F44336' }]} />
+            <Text style={styles.statusLabel}>Occp</Text>
+          </View>
         </View>
       </View>
 
       {/* 3. Floor Plan Layout */}
       <ScrollView style={{ flex: 1 }}>
         <View style={styles.floorPlanCard}>
-          {loading ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#FF5252" />
+          <View style={styles.canvas}>
+            <View style={styles.stageArea}>
+               <View style={styles.stageLine} />
+               <Text style={styles.stageText}>STAGE / PERFORMANCE</Text>
             </View>
-          ) : (
-            <View style={styles.canvas}>
-              
-              {/* --- วาดของตกแต่ง (Decorations) --- */}
-              {decorations.map((decor) => {
-                const pos = {
-                  top: getPos(decor.top_position),
-                  left: getPos(decor.left_position),
-                  width: getPos(decor.width),
-                  height: getPos(decor.height),
-                  position: 'absolute',
-                };
 
-                if (decor.type === 'stage') {
-                  return (
-                    <View key={decor.id} style={[styles.stageArea, pos]}>
-                      <View style={[styles.stageLine, { width: pos.width || 100 }]} />
-                      <Text style={styles.stageText}>{decor.label || 'STAGE'}</Text>
-                    </View>
-                  );
-                }
-                if (decor.type === 'bar' || decor.type === 'bar_area') {
-                  return (
-                    <View key={decor.id} style={[styles.barContainer, pos]}>
-                      <MaterialCommunityIcons name="glass-cocktail" size={16} color="#444" />
-                      <Text style={styles.barText}>{decor.label || 'BAR'}</Text>
-                    </View>
-                  );
-                }
-                if (decor.type === 'wc' || decor.type === 'toilet') {
-                  return (
-                    <View key={decor.id} style={[styles.wcContainer, pos]}>
-                      <MaterialCommunityIcons name="human-male-female" size={20} color="#333" />
-                    </View>
-                  );
-                }
-                if (decor.type === 'door') {
-                  return (
-                    <View key={decor.id} style={[styles.doorWrapper, pos]}>
-                      <View style={styles.doorBtn}>
-                        <Text style={styles.doorText}>DOOR</Text>
-                      </View>
-                    </View>
-                  );
-                }
-                return null;
-              })}
+            {defaultTables.map((table) => {
+              let tableStyle = styles.tableCircle; 
+              if (table.type === 'long') tableStyle = styles.tableLong;
+              else if (table.type === 'square') tableStyle = styles.tableSquare;
+              else if (table.type === 't10') tableStyle = styles.tableT10;
 
-              {/* --- วาดโต๊ะ (Tables) --- */}
-              {tables.map((table) => {
-                let tableTypeStyle = styles.tableCircle; 
-                if (table.type === 'long') tableTypeStyle = styles.tableLong;
-                else if (table.type === 'square') tableTypeStyle = styles.tableSquare;
-                else if (table.type === 't10') tableTypeStyle = styles.tableT10;
+              return (
+                <View key={table.id} style={[styles.tablePosition, {
+                  top: getPos(table.top_position),
+                  left: getPos(table.left_position),
+                  right: getPos(table.right_position),
+                  bottom: getPos(table.bottom_position),
+                }]}>
+                  <View style={[styles.tableBase, tableStyle]}>
+                    <Text style={styles.tableNo}>{table.id}</Text>
+                  </View>
+                </View>
+              );
+            })}
 
-                return (
-                  <TouchableOpacity 
-                    key={table.id} 
-                    style={[styles.tablePosition, {
-                      top: getPos(table.top_position),
-                      left: getPos(table.left_position),
-                    }]}
-                    onPress={() => navigation.navigate('TableDetail', { table })}
-                  >
-                    <View style={[
-                      styles.tableBase, 
-                      tableTypeStyle,
-                      { backgroundColor: getStatusColor(table.status) }
-                    ]}>
-                      <Text style={[styles.tableNo, { color: table.status === 'available' ? '#555' : '#FFF' }]}>
-                        {table.label || 'T'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
+            <View style={styles.doorContainer}>
+              <View style={styles.doorBtn}>
+                <MaterialCommunityIcons name="logout" size={14} color="#FF3B30" />
+                <Text style={styles.doorText}>DOOR</Text>
+              </View>
             </View>
-          )}
+          </View>
         </View>
       </ScrollView>
 
       {/* 4. Bottom Navigation */}
       <View style={styles.bottomNavContainer}>
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomeRas', { restaurantId })}><MaterialCommunityIcons name="home" size={26} color="#ff3030" /></TouchableOpacity>
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('BookingRas', { restaurantId })}><MaterialCommunityIcons name="calendar-check" size={26} color="#666" /></TouchableOpacity>
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('MenuRas', { restaurantId })}><MaterialCommunityIcons name="silverware-fork-knife" size={26} color="#666" /></TouchableOpacity>
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('SettingRas', { restaurantId })}><MaterialCommunityIcons name="cog-outline" size={26} color="#666" /></TouchableOpacity>
-                  </View>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('HomeRas')}
+        >
+          <MaterialCommunityIcons name="view-grid" size={26} color="#FF2A2A" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navItem} 
+          onPress={() => navigation.navigate('BookingRas')}
+        >
+          <MaterialCommunityIcons name="calendar-check" size={26} color="#666" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('MenuRas')}
+        >
+          <MaterialCommunityIcons name="silverware-fork-knife" size={26} color="#666" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.navItem}>
+          <MaterialCommunityIcons name="cog-outline" size={26} color="#666" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -216,38 +157,34 @@ const styles = StyleSheet.create({
   restaurantName: { color: '#FFF', fontSize: 24, fontWeight: 'bold', fontStyle: 'italic' },
   subText: { color: '#AAA', fontSize: 14, marginTop: 5 },
   notificationBtn: { backgroundColor: '#1A1A1A', padding: 8, borderRadius: 10 },
-  statusToggleContainer: { flexDirection: 'row', backgroundColor: '#1A1A1A', borderRadius: 25, width: 140, height: 40, marginTop: 15, padding: 4 },
+  statusToggleContainer: { flexDirection: 'row', backgroundColor: '#1A1A1A', borderRadius: 25, width: 150, height: 45, marginTop: 15, padding: 4 },
   toggleBtn: { flex: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 20 },
   toggleActive: { backgroundColor: '#FF5252' },
   toggleActiveGray: { backgroundColor: '#333' },
   toggleInactive: { backgroundColor: 'transparent' },
-  toggleText: { color: '#666', fontWeight: 'bold', fontSize: 12 },
+  toggleText: { color: '#666', fontWeight: 'bold' },
   textWhite: { color: '#FFF' },
-  legendContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1A1A', marginHorizontal: 20, marginBottom: 15, padding: 15, borderRadius: 20 },
-  legendTitle: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  legendContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1A1A', margin: 20, padding: 15, borderRadius: 20 },
+  legendTitle: { color: '#FFF', fontSize: 18, fontWeight: '600' },
   statusRow: { flexDirection: 'row' },
-  statusItem: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
+  statusItem: { flexDirection: 'row', alignItems: 'center', marginLeft: 15 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 5 },
-  statusLabel: { color: '#666', fontSize: 11 },
-  floorPlanCard: { backgroundColor: '#0A0A0A', marginHorizontal: 15, borderRadius: 30, padding: 10, height: 550, overflow: 'hidden' },
-  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  statusLabel: { color: '#666', fontSize: 12 },
+  floorPlanCard: { backgroundColor: '#0A0A0A', marginHorizontal: 15, borderRadius: 30, padding: 10, height: 600 },
   canvas: { flex: 1, position: 'relative' },
-  stageArea: { alignItems: 'center', justifyContent: 'center' },
-  stageLine: { height: 3, backgroundColor: '#333', borderRadius: 2 },
-  stageText: { color: '#444', fontSize: 9, fontWeight: 'bold', marginTop: 4 },
-  barContainer: { backgroundColor: '#111', borderWidth: 1, borderColor: '#222', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  barText: { color: '#333', fontSize: 8, fontWeight: 'bold', marginTop: 2 },
-  wcContainer: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A0A0A' },
-  doorWrapper: { justifyContent: 'center', alignItems: 'center' },
-  doorBtn: { borderWidth: 1, borderColor: '#444', paddingVertical: 2, paddingHorizontal: 10, borderRadius: 10 },
-  doorText: { color: '#444', fontSize: 9, fontWeight: 'bold' },
+  stageArea: { alignItems: 'center', marginTop: 10 },
+  stageLine: { width: '80%', height: 3, backgroundColor: '#441111', borderRadius: 2 },
+  stageText: { color: '#444', fontSize: 10, fontWeight: 'bold', marginTop: 5 },
   tablePosition: { position: 'absolute' },
-  tableBase: { borderWidth: 1, borderColor: '#333', justifyContent: 'center', alignItems: 'center' },
-  tableNo: { fontSize: 10, fontWeight: 'bold' },
-  tableCircle: { width: 42, height: 42, borderRadius: 21 },
+  tableBase: { backgroundColor: '#1A1A1C', borderWidth: 1, borderColor: '#333', justifyContent: 'center', alignItems: 'center' },
+  tableNo: { color: '#555', fontSize: 10, fontWeight: 'bold' },
+  tableCircle: { width: 40, height: 40, borderRadius: 20 },
   tableSquare: { width: 45, height: 45, borderRadius: 8 },
-  tableLong: { width: 45, height: 85, borderRadius: 12 },
-  tableT10: { width: 80, height: 80, borderTopLeftRadius: 80 },
+  tableLong: { width: 45, height: 90, borderRadius: 15 },
+  tableT10: { width: 100, height: 100, borderTopLeftRadius: 100, borderBottomRightRadius: 0, backgroundColor: '#1A1A1C' },
+  doorContainer: { position: 'absolute', bottom: 20, width: '100%', alignItems: 'center' },
+  doorBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#FF3B30', paddingVertical: 5, paddingHorizontal: 20, borderRadius: 20 },
+  doorText: { color: '#FF3B30', fontSize: 12, fontWeight: 'bold', marginLeft: 5 },
   bottomNavContainer: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 15, backgroundColor: '#000', borderTopWidth: 0.5, borderTopColor: '#222' },
   navItem: { padding: 10 }
 });
