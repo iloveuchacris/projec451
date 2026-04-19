@@ -40,16 +40,13 @@ const QRSelectionScreen = ({ navigation, route }) => { // ✅ เพิ่มก
             />
           </View>
 
-          <View style={styles.accountDetail}>
-            <Text style={styles.infoLabel}>PromptPay / เบอร์โทรศัพท์</Text>
-            <Text style={styles.infoValue}>062-131-9847</Text>
-          </View>
+        
 
           <View style={styles.divider} />
 
           <View style={styles.amountBox}>
             <Text style={styles.amountLabel}>ยอดที่ต้องชำระ</Text>
-            <Text style={styles.amountText}>฿ 100.00</Text>
+            <Text style={styles.amountText}>฿ 500.00</Text>
           </View>
         </View>
 

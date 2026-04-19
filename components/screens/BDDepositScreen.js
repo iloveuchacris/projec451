@@ -30,7 +30,7 @@ const DepositScreen = ({ navigation }) => {
 
         <View style={styles.amountCard}>
           <Text style={styles.amountLabel}>จำนวนเงินมัดจำ</Text>
-          <Text style={styles.amountValue}>฿100</Text>
+          <Text style={styles.amountValue}>฿500</Text>
         </View>
       </View>
 

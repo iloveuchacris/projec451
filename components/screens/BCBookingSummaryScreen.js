@@ -8,20 +8,19 @@ import {
   StatusBar 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../data/supabase';
 
 const BookingSummaryScreen = ({ navigation, route }) => {
-  // ✅ 1. รับข้อมูลที่ส่งมาจากหน้า BookingScreen
-  // ต้องสะกดชื่อตัวแปรให้ตรงกับหน้า Booking (restaurant, date, time, guests)
+
   const { 
     restaurant, 
     date, 
     time, 
-    guests 
+    tableNumber 
   } = route.params || {};
 
-  // ✅ 2. ฟังก์ชันแปลงรูปแบบวันที่ (ทางเลือก: เพื่อให้แสดงผลสวยขึ้น)
   const formatDate = (dateString) => {
-    if(!dateString) return 'ไม่ได้ระบุวันที่';
+    if (!dateString) return '-';
     const options = { day: 'numeric', month: 'short' };
     return new Date(dateString).toLocaleDateString('th-TH', options);
   };
@@ -33,124 +32,174 @@ const BookingSummaryScreen = ({ navigation, route }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
-          style={styles.backButton} 
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="chevron-back" size={28} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>สรุปการจอง</Text>
-        <View style={{ width: 44 }} /> 
+
+        <View style={{ width: 28 }} />
       </View>
 
+      {/* Content */}
       <View style={styles.content}>
-        {/* ไอคอนแสดงความสำเร็จ/สรุป */}
+        
         <View style={styles.iconContainer}>
           <Ionicons name="receipt-outline" size={60} color="#ff3030" />
-          <Text style={styles.subTitleText}>ตรวจสอบรายละเอียดการจอง</Text>
+          <Text style={styles.subTitleText}>ตรวจสอบรายละเอียด</Text>
         </View>
 
-        {/* Card แสดงข้อมูลการจอง */}
+        {/* Card */}
         <View style={styles.card}>
-          <View style={styles.infoRow}>
-            <View>
-              <Text style={styles.label}>ร้านอาหาร</Text>
-            </View>
-            <Text style={styles.valueText}>{restaurant?.name || 'ไม่ได้ระบุชื่อร้าน'}</Text>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>ร้าน</Text>
+            <Text style={styles.value}>{restaurant?.name || '-'}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>วันที่</Text>
+            <Text style={styles.value}>{formatDate(date)}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.label}>เวลา</Text>
+            <Text style={styles.value}>
+              {time ? `${time} น.` : '-'}
+            </Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.infoRow}>
-            <View>
-              <Text style={styles.label}>วันที่จอง</Text>
-            </View>
-            {/* ใช้ formatDate เพื่อความสวยงาม หรือใช้ date ตรงๆ ก็ได้ */}
-            <Text style={styles.valueText}>{formatDate(date)}</Text>
+          <Text style={styles.label}>โต๊ะที่จอง</Text>
+          <Text style={styles.valueText}>
+          {tableNumber ? `Table ${tableNumber}` : 'ไม่ได้เลือกโต๊ะ'}
+        </Text>
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <View>
-              <Text style={styles.label}>เวลา</Text>
-            </View>
-            <Text style={styles.valueText}>{time} น.</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>จำนวนที่นั่ง</Text>
-            <Text style={styles.valueText}>{guests} ท่าน</Text>
-          </View>
         </View>
 
-        <View style={styles.noticeContainer}>
-          <Ionicons name="information-circle-outline" size={16} color="#555" style={{marginBottom: 5}} />
-          <Text style={styles.noticeText}>
-            กรุณาตรวจสอบข้อมูลการจองของท่าน{"\n"}ให้เรียบร้อยก่อนกดยืนยันเพื่อชำระเงินมัดจำ
-          </Text>
-        </View>
+        <Text style={styles.notice}>
+          กรุณาตรวจสอบข้อมูลก่อนกดยืนยัน
+        </Text>
+
       </View>
 
-      {/* Footer ปุ่มกดยืนยัน */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={styles.confirmButton}
-          onPress={() => navigation.navigate('Deposit', { ...route.params })} // ส่งข้อมูลต่อไปหน้ามัดจำด้วย
+          style={styles.button}
+          onPress={() => {
+navigation.navigate('Deposit', { ...route.params })       
+            
+          }}
         >
-          <Text style={styles.confirmButtonText}>ยืนยันข้อมูลการจอง</Text>
+          <Text style={styles.buttonText}>ยืนยันการจอง</Text>
         </TouchableOpacity>
       </View>
+
     </SafeAreaView>
   );
 };
 
+export default BookingSummaryScreen;
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingVertical: 15,
   },
-  backButton: { padding: 5 },
-  headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  content: { flex: 1, paddingHorizontal: 25, paddingTop: 20 },
-  iconContainer: { alignItems: 'center', marginBottom: 30 },
-  subTitleText: { color: '#999', marginTop: 15, fontSize: 16 },
-  card: { 
-    backgroundColor: '#1c1c1e', 
-    borderRadius: 30, 
-    padding: 25, 
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: '#333' 
-  },
-  infoRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingVertical: 12 
-  },
-  label: { color: '#999', fontSize: 15 },
-  valueText: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
-  divider: { height: 1, backgroundColor: '#2c2c2e', marginVertical: 5 },
-  noticeContainer: { alignItems: 'center', marginTop: 10 },
-  noticeText: { color: '#555', textAlign: 'center', fontSize: 13, lineHeight: 20 },
-  footer: { padding: 25, paddingBottom: 40 },
-  confirmButton: { 
-    backgroundColor: '#ff3030', 
-    paddingVertical: 18, 
-    borderRadius: 20, 
-    alignItems: 'center',
-    shadowColor: '#ff3030',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-  },
-  confirmButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-});
 
-export default BookingSummaryScreen;
+  headerTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold'
+  },
+
+  content: {
+    flex: 1,
+    paddingHorizontal: 20
+  },
+
+  iconContainer: {
+    alignItems: 'center',
+    marginVertical: 30
+  },
+
+  subTitleText: {
+    color: '#777',
+    marginTop: 10
+  },
+
+  card: {
+    backgroundColor: '#111',
+    borderRadius: 20,
+    padding: 20
+  },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12
+  },
+
+  label: {
+    color: '#777'
+  },
+
+  value: {
+    color: '#fff',
+    fontWeight: 'bold'
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#222'
+  },
+
+  notice: {
+    textAlign: 'center',
+    color: '#555',
+    marginTop: 20
+  },
+
+  footer: {
+    padding: 20
+  },
+
+  button: {
+    backgroundColor: '#ff3030',
+    padding: 16,
+    borderRadius: 15,
+    alignItems: 'center'
+  },
+
+
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12
+  },
+
+  valueText: {
+    color: '#ffffff',
+    fontWeight: 'bold'
+  }
+});

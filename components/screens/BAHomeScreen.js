@@ -133,7 +133,7 @@ const fetchRestaurants = async () => {
 
       {/* Bottom Tab */}
       <View style={styles.tab}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home" size={24} color="#ff3030" />
         </TouchableOpacity>
 
@@ -141,11 +141,11 @@ const fetchRestaurants = async () => {
           <Ionicons name="search" size={24} color="#666" />
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MyBookings')}> 
           <Ionicons name="calendar" size={24} color="#666" />
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
           <Ionicons name="person" size={24} color="#666" />
         </TouchableOpacity>
       </View>

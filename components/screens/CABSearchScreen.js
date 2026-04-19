@@ -1,47 +1,91 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image, 
-  SafeAreaView, 
-  StatusBar 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// ✅ 1. ดึงข้อมูลร้านอาหารมาจากไฟล์ Data
-import { RESTAURANTS } from '../data/restaurants'; 
+import { supabase } from '../data/supabase';
 
 const SearchScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ 2. ระบบค้นหา: กรองข้อมูลจาก RESTAURANTS ตามชื่อร้าน หรือ ประเภทอาหาร
-  const filteredRestaurants = RESTAURANTS.filter(item => {
-    const itemData = `${item.name.toUpperCase()} ${item.category?.toUpperCase()}`;
-    const textData = searchQuery.toUpperCase();
-    return itemData.indexOf(textData) > -1;
+  // 🔥 ดึงข้อมูลจาก database
+  const fetchRestaurants = async () => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*');
+
+      if (error) {
+        console.log('ERROR:', error);
+        return;
+      }
+
+      setRestaurants(data || []);
+
+    } catch (err) {
+      console.log('CATCH:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
+
+  // 🔍 search filter
+  const filteredRestaurants = restaurants.filter(item => {
+    const text = searchQuery.toLowerCase();
+
+    return (
+      item.name?.toLowerCase().includes(text) ||
+      item.category?.toLowerCase().includes(text) ||
+      item.location?.toLowerCase().includes(text)
+    );
   });
+
+  // loading
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#ff3030" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      {/* ส่วนหัวและช่องค้นหา */}
+
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>ค้นหา</Text>
+
         <View style={styles.searchBarContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color="#666" />
+
           <TextInput
             style={styles.searchInput}
-            placeholder="ค้นหาร้านอาหาร หรือประเภทอาหาร"
+            placeholder="ค้นหาร้านอาหาร"
             placeholderTextColor="#666"
             value={searchQuery}
-            onChangeText={(text) => setSearchQuery(text)}
-            autoFocus={true} // ให้คีย์บอร์ดเด้งขึ้นมาทันทีเมื่อเข้าหน้านี้
+            onChangeText={setSearchQuery}
           />
+
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
               <Ionicons name="close-circle" size={20} color="#666" />
@@ -50,74 +94,102 @@ const SearchScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        
-        {/* ส่วนแสดงผลลัพธ์การค้นหา */}
+      <ScrollView>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            {searchQuery ? `ผลการค้นหา (${filteredRestaurants.length})` : 'แนะนำสำหรับคุณ'}
+            {searchQuery
+              ? `ผลการค้นหา (${filteredRestaurants.length})`
+              : 'ร้านทั้งหมด'}
           </Text>
-          
+
           {filteredRestaurants.length > 0 ? (
-            filteredRestaurants.map((item) => (
-              <TouchableOpacity 
-                key={item.id} 
+            filteredRestaurants.map(item => (
+              <TouchableOpacity
+                key={item.id}
                 style={styles.recommendCard}
-                onPress={() => navigation.navigate('Booking', { restaurant: item })}
+                onPress={() =>
+                  navigation.navigate('Booking', { restaurant: item })
+                }
               >
-                <Image 
-                  source={item.image} 
-                  style={styles.recommendImage} 
+
+                <Image
+                  source={{ uri: item.image_url }}
+                  style={styles.recommendImage}
                 />
+
                 <View style={styles.recommendInfo}>
-                  <View style={styles.recommendHeaderRow}>
-                    <Text style={styles.recommendName} numberOfLines={1}>{item.name}</Text>
-                    <View style={styles.ratingRow}>
-                      <Ionicons name="star" size={14} color="#ff3030" />
-                      <Text style={styles.ratingText}>{item.rating}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.recommendSub}>{item.category} • {item.location}</Text>
-                  <Text style={styles.recommendDistance}>
-                    <Ionicons name="location" size={12} color="#666" /> 1.2 กม.
+                  <Text style={styles.recommendName}>
+                    {item.name}
+                  </Text>
+
+                  <Text style={styles.recommendSub}>
+                    {item.category} • {item.location}
+                  </Text>
+
+                  <Text style={styles.ratingText}>
+                    ⭐ {item.rating}
                   </Text>
                 </View>
+
               </TouchableOpacity>
             ))
           ) : (
             <View style={styles.notFoundContainer}>
-              <Ionicons name="search-outline" size={80} color="#1c1c1e" />
-              <Text style={styles.notFoundText}>ไม่พบร้านที่คุณค้นหา</Text>
+              <Ionicons name="search-outline" size={60} color="#333" />
+              <Text style={styles.notFoundText}>
+                ไม่พบร้านอาหาร
+              </Text>
             </View>
           )}
-        </View>
-        
-        <View style={{ height: 100 }} />
-      </ScrollView>
 
-      {/* Bottom Tab (เพื่อความต่อเนื่องในการใช้งาน) */}
-      <View style={styles.bottomTab}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-          <Ionicons name="search" size={24} color="#ff3030" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="calendar" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
+        </View>
+
+      </ScrollView>
+      {/* Bottom Tab */}
+      <View style={styles.tab}>
+              <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                <Ionicons name="home" size={24} color="#666" />
+              </TouchableOpacity>
+      
+              <TouchableOpacity onPress={() => navigation.navigate('Search')}>
+                <Ionicons name="search" size={24} color="#ff3030" />
+              </TouchableOpacity>
+      
+              <TouchableOpacity onPress={() => navigation.navigate('MyBookings')}> 
+                <Ionicons name="calendar" size={24} color="#666" />
+              </TouchableOpacity>
+      
+              <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                <Ionicons name="person" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+      
+      
+
     </SafeAreaView>
   );
 };
 
+export default SearchScreen;
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  header: { paddingHorizontal: 20, paddingTop: 10 },
-  headerTitle: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+
+  headerTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,31 +198,88 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     height: 50,
   },
-  searchIcon: { marginRight: 10 },
-  searchInput: { flex: 1, color: '#fff', fontSize: 16 },
-  section: { paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
-  recommendCard: { flexDirection: 'row', backgroundColor: '#1c1c1e', borderRadius: 20, padding: 12, marginBottom: 15 },
-  recommendImage: { width: 90, height: 90, borderRadius: 15 },
-  recommendInfo: { flex: 1, marginLeft: 15, justifyContent: 'center' },
-  recommendHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  recommendName: { color: '#fff', fontSize: 16, fontWeight: 'bold', flex: 1, marginRight: 10 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center' },
-  ratingText: { color: '#fff', marginLeft: 4, fontWeight: 'bold' },
-  recommendSub: { color: '#999', fontSize: 13, marginVertical: 4 },
-  recommendDistance: { color: '#666', fontSize: 12 },
-  notFoundContainer: { alignItems: 'center', marginTop: 50 },
-  notFoundText: { color: '#666', fontSize: 16, marginTop: 10 },
-  bottomTab: {
+
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+
+  recommendCard: {
+    flexDirection: 'row',
+    backgroundColor: '#1c1c1e',
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+
+  recommendImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 15,
+    backgroundColor: '#333',
+  },
+
+  recommendInfo: {
+    flex: 1,
+    marginLeft: 15,
+    justifyContent: 'center',
+  },
+
+  recommendName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  recommendSub: {
+    color: '#999',
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  ratingText: {
+    color: '#fff',
+    marginTop: 6,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+
+  notFoundContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+
+  notFoundText: {
+    color: '#666',
+    fontSize: 16,
+    marginTop: 10,
+  },
+
+  tab: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#000',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#000',
     paddingVertical: 15,
     borderTopWidth: 0.5,
-    borderTopColor: '#333',
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
+    borderTopColor: '#333'
   }
 });
-
-export default SearchScreen;
