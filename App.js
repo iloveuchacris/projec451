@@ -18,12 +18,15 @@ import BookingScreen from './components/screens/BBBookingScreen';
 import BookingRasScreen from './components/screens/BBBookingRasScreen';
 import BookingSummaryScreen from './components/screens/BCBookingSummaryScreen';
 import MenuRasScreen from './components/screens/BCMenuRasScreen';
-import SettingsRas from './components/screens/BDSettingsRasScreen';
 /*import DepositScreen from './components/screens/BDDepositScreen';
 import QRSelectionScreen from './components/screens/BEQRSelectionScreen';
 import BookingSuccessScreen from './components/screens/BFBookingSuccessScreen';
 import SearchScreen from './components/screens/CABSearchScreen';
-import MyBookingsScreen from './components/screens/DAMyBookingsScreen';*/
+import MyBookingsScreen from './components/screens/DAMyBookingsScreen';
+import ProfileScreen from './components/screens/EAProfileScreen';
+import TableDetailScreen from './components/screens/RATableDetailScreen';
+import MenuSelectionScreen from './components/screens/RBMenuSelectionScreen';
+import SettingRasScreen from './components/screens/RDSettingRasScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -50,12 +53,15 @@ export default function App() {
         <Stack.Screen name="BookingRas" component={BookingRasScreen} />
         <Stack.Screen name="BookingSummary" component={BookingSummaryScreen} />
         <Stack.Screen name="MenuRas" component={MenuRasScreen} />
-        <Stack.Screen name="BDSettingsRasScreen" component={SettingsRas} />
         {/*<Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="QRSelection" component={QRSelectionScreen} />
         <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
-        <Stack.Screen name="MyBookings" component={MyBookingsScreen} />*/}
+        <Stack.Screen name="MyBookings" component={MyBookingsScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="TableDetail" component={TableDetailScreen} />
+        <Stack.Screen name="MenuSelection" component={MenuSelectionScreen} />
+        <Stack.Screen name="SettingRas" component={SettingRasScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
