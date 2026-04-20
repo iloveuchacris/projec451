@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const DepositScreen = ({ navigation }) => {
-  return (
+const DepositScreen = ({ navigation, route }) => {
+    return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
@@ -38,8 +38,7 @@ const DepositScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.payButton}
-          onPress={() => navigation.navigate('QRSelection')} 
-        >
+          onPress={() => navigation.navigate('QRSelection', { ...route.params })}        >
           <Text style={styles.payButtonText}>ชำระเงินมัดจำ</Text>
         </TouchableOpacity>
       </View>

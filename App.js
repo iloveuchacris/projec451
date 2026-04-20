@@ -7,27 +7,27 @@ import SplashScreen from './components/screens/AASplashScreen';
 import OnboardingScreen from './components/screens/ABAOnboardingScreen';
 import SelectRole  from './components/screens/ABBSelectRole';
 import LoginScreen from './components/screens/ACALoginScreen';
-import LoginResScreen from './components/screens/ACBLoginResScreen';
+import LoginResScreen from './components/screens/RALoginResScreen';
 import RegisterScreen from './components/screens/ADARegisterScreen';
-import RegisterRasScreen from './components/screens/ADARegisterRasScreen';
+import RegisterRasScreen from './components/screens/RDARegisterRasScreen';
 import ForgotPasswordScreen from './components/screens/ADBForgotPasswordScreen';
-import ForgotPasswordRasScreen from './components/screens/ADBForgotPasswordRasScreen';
+import ForgotPasswordRasScreen from './components/screens/RDBForgotPasswordRasScreen';
 import HomeScreen from './components/screens/BAHomeScreen';
-import HomeRasScreen from './components/screens/BAHomeRasScreen';
+import HomeRasScreen from './components/screens/RBAHomeRasScreen';
 import BookingScreen from './components/screens/BBBookingScreen';
-import BookingRasScreen from './components/screens/BBBookingRasScreen';
+import BookingRasScreen from './components/screens/RBBBookingRasScreen';
 import BookingSummaryScreen from './components/screens/BCBookingSummaryScreen';
-import MenuRasScreen from './components/screens/BCMenuRasScreen';
+import MenuRasScreen from './components/screens/RBCMenuRasScreen';
 import DepositScreen from './components/screens/BDDepositScreen';
 import QRSelectionScreen from './components/screens/BEQRSelectionScreen';
 import BookingSuccessScreen from './components/screens/BFBookingSuccessScreen';
 import SearchScreen from './components/screens/CABSearchScreen';
 import MyBookingsScreen from './components/screens/DAMyBookingsScreen';
 import ProfileScreen from './components/screens/EAProfileScreen';
-import TableDetailScreen from './components/screens/RATableDetailScreen';
+import TableDetailScreen from './components/screens/RBCTableDetailScreen';
 import MenuSelectionScreen from './components/screens/RBMenuSelectionScreen';
 import SettingRasScreen from './components/screens/RDSettingRasScreen';
-
+import Checkin from './components/screens/DBCheckin';
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +62,7 @@ export default function App() {
         <Stack.Screen name="TableDetail" component={TableDetailScreen} />
         <Stack.Screen name="MenuSelection" component={MenuSelectionScreen} />
         <Stack.Screen name="SettingRas" component={SettingRasScreen} />
+        <Stack.Screen name="Checkin" component={Checkin} />
 
       </Stack.Navigator>
     </NavigationContainer>

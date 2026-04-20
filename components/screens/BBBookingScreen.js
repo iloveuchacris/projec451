@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, Image,
-  TouchableOpacity, ScrollView,
-  Alert, ActivityIndicator, Dimensions
+  View, 
+  Text, 
+  StyleSheet, 
+  Image,
+  TouchableOpacity, 
+  ScrollView,
+  Alert, 
+  ActivityIndicator, 
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../data/supabase';
@@ -50,7 +56,7 @@ const BookingScreen = ({ route, navigation }) => {
     const fetchAvailableDates = async () => {
       setLoadingDates(true);
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('restaurant_slots')
           .select('available_date')
           .eq('restaurant_id', id)
@@ -58,14 +64,30 @@ const BookingScreen = ({ route, navigation }) => {
           .order('available_date', { ascending: true });
 
         if (data && data.length > 0) {
-          // กรองเอาเฉพาะวันที่ไม่ซ้ำกัน
-          const uniqueDates = [...new Set(data.map(item => item.available_date))];
-          setAvailableDates(uniqueDates);
-          setSelectedDate(uniqueDates[0]); // เลือกวันแรกสุดเป็นค่าเริ่มต้นอัตโนมัติ
-        } else {
-          setAvailableDates([]);
-          setSelectedDate(null);
-        }
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const maxDate = new Date();
+          maxDate.setDate(today.getDate() + 5); // วันนี้ + 5 วัน
+
+  // 🔥 filter วันที่
+  const filteredDates = data
+    .map(item => item.available_date)
+    .filter(date => {
+      const d = new Date(date);
+      return d >= today && d <= maxDate;
+    });
+
+  // 🔥 เอาไม่ซ้ำ + sort
+  const uniqueDates = [...new Set(filteredDates)].sort(
+    (a, b) => new Date(a) - new Date(b)
+    );
+
+      setAvailableDates(uniqueDates);
+      setSelectedDate(uniqueDates[0] || null);
+    } else {
+      setAvailableDates([]);
+      setSelectedDate(null);
+      }
       } catch (error) {
         console.error("Error fetching dates:", error);
       } finally {
@@ -97,6 +119,29 @@ const BookingScreen = ({ route, navigation }) => {
     fetchMapData();
   }, [id]);
 
+  const isTimePassed = (date, startTime) => {
+  const today = new Date();
+  const selectedDateObj = new Date(date);
+
+  // ถ้าวันที่เลือกไม่ใช่ "วันนี้" (เช่น เลือกพรุ่งนี้) ไม่ต้องเช็คเวลา ให้จองได้เลย
+  if (selectedDateObj.setHours(0,0,0,0) > today.setHours(0,0,0,0)) {
+    return false;
+  }
+
+  // ถ้าเป็น "วันนี้" ให้เช็คเวลา
+  const now = new Date();
+  const [hours, minutes] = startTime.split(':');
+  const slotTime = new Date();
+  slotTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+  return slotTime < now; // ถ้าเวลา slot น้อยกว่าเวลาปัจจุบัน แปลว่าผ่านมาแล้ว (true)
+};
+
+  const formatTimeForDB = (timeStr) => {
+    if (!timeStr) return "";
+    return timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+  };
+
   // 🔥 3. ดึงรอบเวลา (Slots) -> ดึงเฉพาะตอนที่มีการเลือกวันที่
   useEffect(() => {
     const fetchSlotsData = async () => {
@@ -124,6 +169,7 @@ const BookingScreen = ({ route, navigation }) => {
     };
     fetchSlotsData();
   }, [selectedDate, id]);
+  
 
   const getTableStyle = (type) => {
     switch (type) {
@@ -135,6 +181,30 @@ const BookingScreen = ({ route, navigation }) => {
       default: return styles.tableSquare;
     }
   };
+
+  const [bookedTables, setBookedTables] = useState([]);
+    useEffect(() => {
+  if (!selectedDate || !selectedSlot) return;
+
+  const fetchBooked = async () => {
+    const { data , error } = await supabase
+      .from('reservations')
+      .select('table_id')
+      .eq('restaurant_id', id) // ✅ สำคัญมาก
+      .eq('booking_date', selectedDate)
+      .eq('booking_time', formatTimeForDB(selectedSlot.start_time))
+      .eq('status', 'confirmed'); // ✅ แก้ตรงนี้
+
+    if (!error && data) {
+      console.log("BOOKED:", data); // 🔍 debug
+      setBookedTables(data.map(i => i.table_id));
+    } else {
+      setBookedTables([]);
+    }
+  };
+
+  fetchBooked();
+}, [selectedDate, selectedSlot]);
 
   return (
     <View style={styles.container}>
@@ -160,7 +230,8 @@ const BookingScreen = ({ route, navigation }) => {
                   key={date}
                   onPress={() => {
                     setSelectedDate(date);
-                    setSelectedSlot(null); // รีเซ็ตเวลาทุกครั้งที่เปลี่ยนวัน
+                    setSelectedSlot(null);
+                    setSelectedTable(null);
                   }}
                   style={[
                     styles.dateCard,
@@ -177,14 +248,45 @@ const BookingScreen = ({ route, navigation }) => {
             </ScrollView>
           )}
 
-          {/* 🗺️ ส่วนที่ 2: Floor Plan (แสดงเสมอ) */}
-          <Text style={styles.sectionTitle}>2. ROOFTOP FLOOR PLAN</Text>
+         {/* 🕒 ส่วนที่ 2: เลือกรอบเวลา */}
+          <Text style={styles.sectionTitle}>2. SELECT TIME</Text>
+          <View style={styles.slotGrid}>
+            {slots.length > 0 ? (
+              slots.map((slot) => {
+                const passed = isTimePassed(selectedDate, slot.start_time);
+                return (
+                  <TouchableOpacity
+                    key={slot.id}
+                    disabled={passed}
+                    onPress={() => {
+                      setSelectedSlot(slot);
+                      setSelectedTable(null); // ✅ ล้างโต๊ะที่เลือกไว้เมื่อเปลี่ยนเวลา
+                    }}
+                    style={[
+                      styles.slotCard,
+                      selectedSlot?.id === slot.id && styles.selectedSlotCard,
+                      passed && { backgroundColor: '#050505', opacity: 0.3 }
+                    ]}
+                  >
+                    <Text style={[styles.slotText, selectedSlot?.id === slot.id && { color: '#000' }]}>
+                      {slot.start_time.slice(0, 5)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <Text style={{ color: '#555', marginTop: 10 }}>ไม่มีรอบเวลาว่างสำหรับวันที่เลือก</Text>
+            )}
+          </View>
+        
+
+          {/* 🗺️ ส่วนที่ 3: Floor Plan */}
+          <Text style={styles.sectionTitle}>3. ROOFTOP FLOOR PLAN</Text>
           <View style={styles.mapContainer}>
             {loadingMap ? (
               <ActivityIndicator color="#ff3030" style={{ marginTop: '50%' }} />
             ) : (
               <>
-                {/* Render ของตกแต่ง */}
                 {decorations.map((item) => {
                   const dynamicLayout = {
                     position: 'absolute',
@@ -195,7 +297,6 @@ const BookingScreen = ({ route, navigation }) => {
                     width: parseVal(item.width),
                     height: parseVal(item.height),
                   };
-
                   if (item.type === 'view') return <View key={item.id} style={[styles.decorView, dynamicLayout]}><Text style={styles.viewText}>{item.label}</Text></View>;
                   if (item.type === 'stage') return <View key={item.id} style={[styles.decorStage, dynamicLayout]}><View style={styles.stageLine} /><Text style={styles.stageText}>{item.label}</Text></View>;
                   if (item.type === 'bar') return <View key={item.id} style={[styles.decorBar, dynamicLayout]}><Text style={styles.viewText}>{item.label}</Text></View>;
@@ -204,18 +305,20 @@ const BookingScreen = ({ route, navigation }) => {
                   return null;
                 })}
 
-                {/* Render โต๊ะ */}
                 {tables.map((table) => {
                   const isSelected = selectedTable?.id === table.id;
+                  const isBooked = bookedTables.includes(table.id);
                   return (
                     <TouchableOpacity
                       key={table.id}
+                      disabled={isBooked}
                       onPress={() => setSelectedTable(table)}
                       style={[
                         styles.tableBase,
                         getTableStyle(table.type),
                         { top: parseVal(table.top_position), left: parseVal(table.left_position) },
-                        isSelected && styles.selectedTableActive
+                        isSelected && styles.selectedTableActive,
+                        isBooked && { backgroundColor: '#333', opacity: 0.3 }
                       ]}
                     >
                       <Text style={[styles.tableIdText, isSelected && { color: '#000' }]}>{table.id}</Text>
@@ -225,62 +328,46 @@ const BookingScreen = ({ route, navigation }) => {
               </>
             )}
           </View>
-
-          {/* 🕒 ส่วนที่ 3: เลือกรอบเวลา (แสดงตามวันที่เลือก) */}
-          <Text style={styles.sectionTitle}>3. SELECT TIME</Text>
-          <View style={styles.slotGrid}>
-            {slots.length > 0 ? slots.map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                onPress={() => setSelectedSlot(slot)}
-                style={[styles.slotCard, selectedSlot?.id === slot.id && styles.selectedSlotCard]}
-              >
-                <Text style={[styles.slotText, selectedSlot?.id === slot.id && { color: '#000' }]}>
-                  {slot.start_time.slice(0, 5)}
-                </Text>
-              </TouchableOpacity>
-            )) : <Text style={{color: '#555', marginTop: 10}}>ไม่มีรอบเวลาว่างสำหรับวันที่เลือก</Text>}
-          </View>
           <View style={{ height: 120 }} />
         </ScrollView>
       </View>
 
-      {/* 🧾 ส่วนที่ 4: Footer สรุปการจอง */}
+      {/* 🧾 ส่วนที่ 4: Footer */}
       <View style={styles.footer}>
         <View style={{ flex: 1 }}>
-            <Text style={styles.summaryLabel}>{name} Selection:</Text>
-            <Text style={styles.summaryValue}>
-              {selectedTable ? `Table ${selectedTable.id}` : '-'} | {selectedSlot ? `@ ${selectedSlot.start_time.slice(0,5)}` : 'เลือกเวลา'}
-            </Text>
+          <Text style={styles.summaryLabel}>{name} Selection:</Text>
+          <Text style={styles.summaryValue}>
+            {selectedTable ? `Table ${selectedTable.id}` : '-'} | {selectedSlot ? ` ${selectedSlot.start_time.slice(0, 5)}` : 'เลือกเวลา'}
+          </Text>
         </View>
 
-        
-        <TouchableOpacity 
-          style={styles.bookButton} 
+          <TouchableOpacity
+          style={styles.bookButton}
           onPress={() => {
-          // 1. ตรวจสอบก่อนว่าเลือกครบหรือยัง
-        if (!selectedDate || !selectedSlot || !selectedTable) {
-        Alert.alert('ข้อมูลไม่ครบ', 'กรุณาเลือกวันที่ รอบเวลา และโต๊ะที่ต้องการจอง');
-        return;
-      }
+  // เช็คก่อนว่าเลือกครบหรือยัง
+            if (!selectedDate || !selectedSlot || !selectedTable) {
+              Alert.alert('ข้อมูลไม่ครบ', 'กรุณาเลือกให้ครบทั้งวันที่ เวลา และโต๊ะ');
+              return;
+            }
 
-        // 2. นำทางไปยังหน้า BookingSummary พร้อมส่ง params
-        navigation.navigate('BookingSummary', {
-      restaurant,
-      date: selectedDate,
-      time: selectedSlot.start_time.slice(0, 5),
-      tableNumber: selectedTable.id,
-      guests: selectedTable.capacity || 1, // ✅ สำคัญ
-        });
+            navigation.navigate('BookingSummary', {
+            restaurant,
+            date: selectedDate,
+        // ✅ ใช้ Optional Chaining (?.) เพื่อกันพัง และมั่นใจว่ามีค่าก่อน slice
+            time: selectedSlot?.start_time ? selectedSlot.start_time.slice(0, 5) : '',
+            tableId: selectedTable.id,    
+            tableNumber: selectedTable.id, 
+            slotId: selectedSlot.id, // ส่ง ID ไปด้วยตามที่คุยกันไว้ก่อนหน้า
+            guests: selectedTable.capacity || 1,
+          });
       }}
->
-      <Text style={styles.bookButtonText}>Book Now</Text>
-</TouchableOpacity>
+        >
+          <Text style={styles.bookButtonText}>Book Now</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
-
 export default BookingScreen;
 
 const styles = StyleSheet.create({

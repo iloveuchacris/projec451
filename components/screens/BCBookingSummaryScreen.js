@@ -96,7 +96,7 @@ const BookingSummaryScreen = ({ navigation, route }) => {
         <TouchableOpacity 
           style={styles.button}
           onPress={() => {
-navigation.navigate('Deposit', { ...route.params })       
+          navigation.navigate('Deposit', { ...route.params })       
             
           }}
         >

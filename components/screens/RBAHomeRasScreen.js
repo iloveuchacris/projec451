@@ -110,97 +110,59 @@ export default function HomeRasScreen({ route, navigation }) {
       </View>
 
       {/* 3. Floor Plan Layout */}
-      <ScrollView style={{ flex: 1 }}>
-        <View style={styles.floorPlanCard}>
-          {loading ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#FF5252" />
-            </View>
-          ) : (
-            <View style={styles.canvas}>
-              
-              {/* --- วาดของตกแต่ง (Decorations) --- */}
-              {decorations.map((decor) => {
-                const pos = {
-                  top: getPos(decor.top_position),
-                  left: getPos(decor.left_position),
-                  width: getPos(decor.width),
-                  height: getPos(decor.height),
-                  position: 'absolute',
-                };
+      <Text style={styles.sectionTitle}>2. ROOFTOP FLOOR PLAN</Text>
+            <View style={styles.mapContainer}>
+              {loadingMap ? (
+              <ActivityIndicator color="#ff3030" style={{ marginTop: '50%' }} />
+              ) : (
+              <>
+        {/* Render ของตกแต่ง */}
+          {decorations.map((item) => {
+          const dynamicLayout = {
+          position: 'absolute',
+          top: parseVal(item.top_position),
+          bottom: parseVal(item.bottom_position),
+          left: parseVal(item.left_position),
+          right: parseVal(item.right_position),
+          width: parseVal(item.width),
+          height: parseVal(item.height),
+        };
+      
+          if (item.type === 'view') return <View key={item.id} style={[styles.decorView, dynamicLayout]}><Text style={styles.viewText}>{item.label}</Text></View>;
+          if (item.type === 'stage') return <View key={item.id} style={[styles.decorStage, dynamicLayout]}><View style={styles.stageLine} /><Text style={styles.stageText}>{item.label}</Text></View>;
+          if (item.type === 'bar') return <View key={item.id} style={[styles.decorBar, dynamicLayout]}><Text style={styles.viewText}>{item.label}</Text></View>;
+          if (item.type === 'wc') return <View key={item.id} style={[styles.decorWC, dynamicLayout]}><View style={styles.wcBox}><Ionicons name="man" size={14} color="#ff3030" /></View><View style={[styles.wcBox, { borderTopWidth: 1, borderColor: '#333' }]}><Ionicons name="woman" size={14} color="#ff3030" /></View></View>;
+          if (item.type === 'door') return <View key={item.id} style={[styles.decorDoor, dynamicLayout]}><Text style={styles.doorText}>{item.label}</Text></View>;
+                        return null;
+                      })}
+      
+                      {/* Render โต๊ะ */}
+                      {tables.map((table) => {
+                        const isSelected = selectedTable?.id === table.id;
+                        return (
+                          <TouchableOpacity
+                            key={table.id}
+                            onPress={() => setSelectedTable(table)}
+                            style={[
+                              styles.tableBase,
+                              getTableStyle(table.type),
+                              { top: parseVal(table.top_position), left: parseVal(table.left_position) },
+                              isSelected && styles.selectedTableActive
+                            ]}
+                          >
+                  <Text style={[styles.tableIdText, isSelected && { color: '#000' }]}>{table.id}</Text>
+                          </TouchableOpacity>
+                        );
+                })}
+              </>
+            )}
+         </View>
 
-                if (decor.type === 'stage') {
-                  return (
-                    <View key={decor.id} style={[styles.stageArea, pos]}>
-                      <View style={[styles.stageLine, { width: pos.width || 100 }]} />
-                      <Text style={styles.stageText}>{decor.label || 'STAGE'}</Text>
-                    </View>
-                  );
-                }
-                if (decor.type === 'bar' || decor.type === 'bar_area') {
-                  return (
-                    <View key={decor.id} style={[styles.barContainer, pos]}>
-                      <MaterialCommunityIcons name="glass-cocktail" size={16} color="#444" />
-                      <Text style={styles.barText}>{decor.label || 'BAR'}</Text>
-                    </View>
-                  );
-                }
-                if (decor.type === 'wc' || decor.type === 'toilet') {
-                  return (
-                    <View key={decor.id} style={[styles.wcContainer, pos]}>
-                      <MaterialCommunityIcons name="human-male-female" size={20} color="#333" />
-                    </View>
-                  );
-                }
-                if (decor.type === 'door') {
-                  return (
-                    <View key={decor.id} style={[styles.doorWrapper, pos]}>
-                      <View style={styles.doorBtn}>
-                        <Text style={styles.doorText}>DOOR</Text>
-                      </View>
-                    </View>
-                  );
-                }
-                return null;
-              })}
-
-              {/* --- วาดโต๊ะ (Tables) --- */}
-              {tables.map((table) => {
-                let tableTypeStyle = styles.tableCircle; 
-                if (table.type === 'long') tableTypeStyle = styles.tableLong;
-                else if (table.type === 'square') tableTypeStyle = styles.tableSquare;
-                else if (table.type === 't10') tableTypeStyle = styles.tableT10;
-
-                return (
-                  <TouchableOpacity 
-                    key={table.id} 
-                    style={[styles.tablePosition, {
-                      top: getPos(table.top_position),
-                      left: getPos(table.left_position),
-                    }]}
-                    onPress={() => navigation.navigate('TableDetail', { table })}
-                  >
-                    <View style={[
-                      styles.tableBase, 
-                      tableTypeStyle,
-                      { backgroundColor: getStatusColor(table.status) }
-                    ]}>
-                      <Text style={[styles.tableNo, { color: table.status === 'available' ? '#555' : '#FFF' }]}>
-                        {table.label || 'T'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-            </View>
-          )}
-        </View>
-      </ScrollView>
+      
 
       {/* 4. Bottom Navigation */}
       <View style={styles.bottomNavContainer}>
-                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomeRas', { restaurantId })}><MaterialCommunityIcons name="home" size={26} color="#ff3030" /></TouchableOpacity>
+                    <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomeRas', { restaurantId })}><MaterialCommunityIcons name="" size={26} color="#666" /></TouchableOpacity>
                     <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('BookingRas', { restaurantId })}><MaterialCommunityIcons name="calendar-check" size={26} color="#666" /></TouchableOpacity>
                     <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('MenuRas', { restaurantId })}><MaterialCommunityIcons name="silverware-fork-knife" size={26} color="#666" /></TouchableOpacity>
                     <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('SettingRas', { restaurantId })}><MaterialCommunityIcons name="cog-outline" size={26} color="#666" /></TouchableOpacity>
