@@ -17,7 +17,7 @@ import HomeRasScreen from './components/screens/RBAHomeRasScreen';
 import BookingScreen from './components/screens/BBBookingScreen';
 import BookingRasScreen from './components/screens/RBBBookingRasScreen';
 import BookingSummaryScreen from './components/screens/BCBookingSummaryScreen';
-import MenuRasScreen from './components/screens/RBCMenuRasScreen';
+import MenuRasScreen from './components/screens/BCMenuRasScreen';
 import DepositScreen from './components/screens/BDDepositScreen';
 import QRSelectionScreen from './components/screens/BEQRSelectionScreen';
 import BookingSuccessScreen from './components/screens/BFBookingSuccessScreen';
@@ -53,7 +53,7 @@ export default function App() {
         <Stack.Screen name="BookingRas" component={BookingRasScreen} />
         <Stack.Screen name="BookingSummary" component={BookingSummaryScreen} />
         <Stack.Screen name="MenuRas" component={MenuRasScreen} />
-        <Stack.Screen name="Deposit" component={DepositScreen} />
+        {/*<Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="QRSelection" component={QRSelectionScreen} />
         <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
@@ -67,4 +67,4 @@ export default function App() {
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
