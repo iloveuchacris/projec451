@@ -169,7 +169,7 @@ const handleLockTable = async (table) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'occupied': return '#2e1818'; 
+      case 'occupied': return '#ff3030'; 
       case 'reserved': return '#dfc471'; 
       default: return '#161616'; 
     }
