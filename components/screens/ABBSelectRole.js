@@ -26,7 +26,7 @@ const SelectRole = ({ navigation }) => {
       <View style={styles.card}>
         <View style={styles.row}>
           <View style={styles.iconBoxRed}>
-            <MaterialCommunityIcons name="chair-rolling" size={28} color="#ff7e7e" />
+            <MaterialCommunityIcons name="chair-rolling" size={28} color="#d64e4e" />
           </View>
           <Text style={styles.cardTitle}>สำหรับลูกค้า</Text>
         </View>
@@ -48,7 +48,7 @@ const SelectRole = ({ navigation }) => {
       <View style={styles.card}>
         <View style={styles.row}>
           <View style={styles.iconBoxBlue}>
-            <MaterialCommunityIcons name="storefront-outline" size={28} color="#7eb6ff" />
+            <MaterialCommunityIcons name="storefront-outline" size={28} color="#145bb9" />
           </View>
           <Text style={styles.cardTitle}>สำหรับร้านอาหาร</Text>
         </View>
@@ -88,11 +88,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   titleRed: {
-    color: '#FF4757', // สีแดงสดขึ้น
+    color: '#FF3030', // สีแดงสดขึ้น
     fontStyle: 'italic'
   },
   titleBooking: {
-    color: '#FF4757',
+    color: '#FF3030',
     fontSize: 48,
     fontWeight: 'bold',
     fontStyle: 'italic',
@@ -135,13 +135,13 @@ const styles = StyleSheet.create({
     marginBottom: 25
   },
   buttonCustomer: {
-    backgroundColor: '#F28B82',
+    backgroundColor: '#d64e4e',
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center'
   },
   buttonRestaurant: {
-    backgroundColor: '#8DB9FF',
+    backgroundColor: '#145bb9',
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center'
