@@ -28,7 +28,8 @@
     "plugins": [
       "expo-web-browser",
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

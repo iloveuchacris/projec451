@@ -17,7 +17,7 @@ import HomeRasScreen from './components/screens/RBAHomeRasScreen';
 import BookingScreen from './components/screens/BBBookingScreen';
 import BookingRasScreen from './components/screens/RBBBookingRasScreen';
 import BookingSummaryScreen from './components/screens/BCBookingSummaryScreen';
-import MenuRasScreen from './components/screens/BCMenuRasScreen';
+import MenuRasScreen from './components/screens/RBCMenuRasScreen';
 import DepositScreen from './components/screens/BDDepositScreen';
 import QRSelectionScreen from './components/screens/BEQRSelectionScreen';
 import BookingSuccessScreen from './components/screens/BFBookingSuccessScreen';
@@ -28,6 +28,12 @@ import TableDetailScreen from './components/screens/RBCTableDetailScreen';
 import MenuSelectionScreen from './components/screens/RBMenuSelectionScreen';
 import SettingRasScreen from './components/screens/RDSettingRasScreen';
 import Checkin from './components/screens/DBCheckin';
+import EditStoreRasScreen from './components/screens/RDEditStoreRasScreen';
+import ChangePasswordRasScreen from './components/screens/REChangePasswordRasScreen';
+import HelpCenterRasScreen from './components/screens/REHelpCenterRasScreen';
+import OpeningHoursRasScreen from './components/screens/REOpeningHoursRasScreen';
+import NotificationsRasScreen from './components/screens/RENotificationsRasScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -53,7 +59,7 @@ export default function App() {
         <Stack.Screen name="BookingRas" component={BookingRasScreen} />
         <Stack.Screen name="BookingSummary" component={BookingSummaryScreen} />
         <Stack.Screen name="MenuRas" component={MenuRasScreen} />
-        {/*<Stack.Screen name="Deposit" component={DepositScreen} />
+        <Stack.Screen name="Deposit" component={DepositScreen} />
         <Stack.Screen name="QRSelection" component={QRSelectionScreen} />
         <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
@@ -63,6 +69,11 @@ export default function App() {
         <Stack.Screen name="MenuSelection" component={MenuSelectionScreen} />
         <Stack.Screen name="SettingRas" component={SettingRasScreen} />
         <Stack.Screen name="Checkin" component={Checkin} />
+        <Stack.Screen name="EditStoreRas" component={EditStoreRasScreen} />
+        <Stack.Screen name="ChangePasswordRas" component={ChangePasswordRasScreen} />
+        <Stack.Screen name="HelpCenterRas" component={HelpCenterRasScreen} />
+        <Stack.Screen name="OpeningHoursRas" component={OpeningHoursRasScreen} />
+        <Stack.Screen name="NotificationsRas" component={NotificationsRasScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>

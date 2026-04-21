@@ -327,10 +327,10 @@ const BookingScreen = ({ route, navigation }) => {
                 })}
               </>
             )}
-          </View>
-          <View style={{ height: 120 }} />
-        </ScrollView>
-      </View>
+            </View>
+            <View style={{ height: 120 }} />
+            </ScrollView>
+        </View>
 
       {/* 🧾 ส่วนที่ 4: Footer */}
       <View style={styles.footer}>

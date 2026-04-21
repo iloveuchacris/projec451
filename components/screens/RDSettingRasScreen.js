@@ -1,141 +1,224 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable, 
+  ActivityIndicator, Alert, Platform 
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../data/supabase';
 
-export default function SettingRasScreen({ route, navigation }) {
-  const { restaurantId } = route.params || {};
+export default function SettingRasScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  
+  const restaurantId = route.params?.restaurantId || '33edc2e8-0687-4993-a957-43efa7677127';
+  
+  const [restaurantData, setRestaurantData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "ออกจากระบบ",
-      "คุณต้องการออกจากระบบใช่หรือไม่?",
-      [
-        { text: "ยกเลิก", style: "cancel" },
-        { 
-          text: "ตกลง", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              const { error } = await supabase.auth.signOut();
-              if (error) throw error;
-              
-              // ล้าง stack และกลับไปหน้า Login
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'LoginRes' }],
-              });
-            } catch (error) {
-              Alert.alert('Error', 'ไม่สามารถออกจากระบบได้: ' + error.message);
-            }
-          } 
-        }
-      ]
-    );
+  useEffect(() => {
+    fetchProfile();
+  }, [restaurantId]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('name')
+        .eq('id', restaurantId)
+        .single();
+      if (data) setRestaurantData(data);
+    } catch (e) {
+      console.log("Fetch Error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const SettingItem = ({ icon, title, subtitle, onPress, color = "#FFF", showArrow = true }) => (
-    <TouchableOpacity style={styles.item} onPress={onPress}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-        <MaterialCommunityIcons name={icon} size={24} color={color} />
+  const MenuButton = ({ title, subTitle, icon, iconColor, bgColor, onPress }) => (
+    <Pressable 
+      style={({ pressed }) => [
+        styles.item, 
+        { backgroundColor: pressed ? '#121212' : '#0D0D0D' }
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.iconBox, { backgroundColor: bgColor }]}>
+        <MaterialCommunityIcons name={icon} size={24} color={iconColor} />
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.itemTitle, { color: color === '#FFF' ? '#FFF' : color }]}>{title}</Text>
-        {subtitle && <Text style={styles.itemSubtitle}>{subtitle}</Text>}
+        <Text style={styles.itemTitle}>{title}</Text>
+        <Text style={styles.itemSub}>{subTitle}</Text>
       </View>
-      {showArrow && <MaterialCommunityIcons name="chevron-right" size={24} color="#333" />}
-    </TouchableOpacity>
+      <MaterialCommunityIcons name="chevron-right" size={24} color="#333" />
+    </Pressable>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>ตั้งค่าระบบ</Text>
+      <View style={{ flex: 1 }}>
+        
+        {/* --- 1. Header --- */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ตั้งค่าระบบ</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#FF5252" style={{ alignSelf: 'flex-start', marginTop: 5 }} />
+          ) : (
+            <Text style={styles.restaurantName}>
+              {restaurantData ? `ร้าน: ${restaurantData.name}` : 'ไม่พบข้อมูลร้าน'}
+            </Text>
+          )}
+        </View>
+
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>ข้อมูลร้านค้า</Text>
+            <MenuButton 
+              title="ข้อมูลร้านค้า"
+              subTitle="แก้ไขรายละเอียด พิกัด และชื่อร้าน"
+              icon="storefront-outline"
+              iconColor="#FF5252"
+              bgColor="rgba(255,82,82,0.1)"
+              onPress={() => navigation.navigate('EditStoreRas', { restaurantId })}
+            />
+            <MenuButton 
+              title="เวลาเปิด-ปิดร้าน"
+              subTitle="กำหนดเวลาให้บริการในแต่ละวัน"
+              icon="clock-outline"
+              iconColor="#529EFF"
+              bgColor="rgba(82,158,255,0.1)"
+              onPress={() => navigation.navigate('OpeningHoursRas', { restaurantId })}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>ความปลอดภัย</Text>
+            <MenuButton 
+              title="เปลี่ยนรหัสผ่าน"
+              subTitle="เปลี่ยนรหัสผ่านเพื่อความปลอดภัยของบัญชี"
+              icon="lock-reset"
+              iconColor="#FFA500"
+              bgColor="rgba(255,165,0,0.1)"
+              onPress={() => navigation.navigate('ChangePasswordRas')}
+            />
+            <MenuButton 
+              title="การแจ้งเตือน"
+              subTitle="ตั้งค่าการแจ้งเตือนการจองและระบบ"
+              icon="bell-outline"
+              iconColor="#00C853"
+              bgColor="rgba(0,200,83,0.1)"
+              onPress={() => navigation.navigate('NotificationsRas')}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>ช่วยเหลือ</Text>
+            <MenuButton 
+              title="ศูนย์ช่วยเหลือ"
+              subTitle="ติดต่อเจ้าหน้าที่หรือดูวิธีใช้งาน"
+              icon="help-circle-outline"
+              iconColor="#9C27B0"
+              bgColor="rgba(156,39,176,0.1)"
+              onPress={() => navigation.navigate('HelpCenterRas')}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>บัญชีผู้ใช้</Text>
+            <Pressable 
+              style={({ pressed }) => [
+                styles.item, 
+                { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D', borderColor: 'rgba(255,82,82,0.1)' }
+              ]}
+              onPress={() => {
+                Alert.alert("ยืนยัน", "คุณต้องการออกจากระบบใช่หรือไม่?", [
+                  { text: "ยกเลิก", style: "cancel" },
+                  { text: "ตกลง", onPress: async () => {
+                      await supabase.auth.signOut();
+                      navigation.reset({ index: 0, routes: [{ name: 'LoginResScreen' }] });
+                  }}
+                ]);
+              }}
+            >
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(255,82,82,0.1)' }]}>
+                <MaterialCommunityIcons name="logout" size={24} color="#FF5252" />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={[styles.itemTitle, { color: '#FF5252' }]}>ออกจากระบบ</Text>
+                <Text style={styles.itemSub}>ลงชื่อออกจากการใช้งานในเครื่องนี้</Text>
+              </View>
+            </Pressable>
+          </View>
+        </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ร้านค้า</Text>
-          <SettingItem 
-            icon="storefront-outline" 
-            title="ข้อมูลร้านค้า" 
-            subtitle="แก้ไขชื่อร้านและรายละเอียด"
-            onPress={() => {}} 
-          />
-          <SettingItem 
-            icon="clock-outline" 
-            title="เวลาเปิด-ปิด" 
-            subtitle="ตั้งเวลาให้บริการของร้าน"
-            onPress={() => {}} 
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>บัญชีและความปลอดภัย</Text>
-          <SettingItem 
-            icon="shield-check-outline" 
-            title="เปลี่ยนรหัสผ่าน" 
-            onPress={() => {}} 
-          />
-          <SettingItem 
-            icon="bell-ring-outline" 
-            title="การแจ้งเตือน" 
-            onPress={() => {}} 
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>อื่นๆ</Text>
-          <SettingItem 
-            icon="help-circle-outline" 
-            title="ศูนย์ช่วยเหลือ" 
-            onPress={() => {}} 
-          />
-          <SettingItem 
-            icon="logout" 
-            title="ออกจากระบบ" 
-            subtitle="ออกจากบัญชีปัจจุบัน"
-            color="#FF5252"
-            showArrow={false}
-            onPress={handleLogout} 
-          />
-        </View>
-
-        <Text style={styles.versionText}>Version 1.0.0 (BETA)</Text>
-      </ScrollView>
+      {/* --- 6. Bottom Navigation Bar (ไม่มีจุด และความสูงเท่าหน้า Home) --- */}
       <View style={styles.bottomNavContainer}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomeRas', { restaurantId })}><MaterialCommunityIcons name="home" size={26} color="#666" /></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('BookingRas', { restaurantId })}><MaterialCommunityIcons name="calendar-check" size={26} color="#666" /></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('MenuRas', { restaurantId })}><MaterialCommunityIcons name="silverware-fork-knife" size={26} color="#666" /></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('SettingRas', { restaurantId })}><MaterialCommunityIcons name="cog-outline" size={26} color="#ff3030" /></TouchableOpacity>
-    </View>
-    
-          </SafeAreaView>
+        
+        <Pressable 
+          style={styles.navItem} 
+          onPress={() => navigation.navigate('HomeRas', { restaurantId })}
+        >
+          <MaterialCommunityIcons name="view-dashboard" size={28} color="#888" />
+        </Pressable>
+        
+        <Pressable 
+          style={styles.navItem} 
+          onPress={() => navigation.navigate('BookingRas', { restaurantId })}
+        >
+          <MaterialCommunityIcons name="calendar-check" size={28} color="#888" />
+        </Pressable>
+
+        <Pressable 
+          style={styles.navItem} 
+          onPress={() => navigation.navigate('MenuRas', { restaurantId })}
+        >
+          <MaterialCommunityIcons name="silverware-fork-knife" size={28} color="#888" />
+        </Pressable>
+        
+        {/* ปุ่มตั้งค่า (Active สีแดง แต่ไม่มีจุด) */}
+        <Pressable style={styles.navItem}>
+          <MaterialCommunityIcons name="cog" size={28} color="#FF3030" />
+        </Pressable>
+      </View>
+
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  header: { padding: 20, paddingTop: 10 },
-  headerTitle: { color: '#FFF', fontSize: 28, fontWeight: 'bold' },
-  scrollContent: { paddingBottom: 30 },
-  section: { marginBottom: 25, paddingHorizontal: 20 },
-  sectionLabel: { color: '#555', fontSize: 13, fontWeight: 'bold', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
-  item: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#0A0A0A', 
-    padding: 16, 
-    borderRadius: 20, 
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#111'
-  },
-  iconContainer: { width: 45, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  header: { paddingHorizontal: 25, paddingTop: 20, paddingBottom: 25, borderBottomWidth: 0.5, borderBottomColor: '#222' },
+  headerTitle: { color: '#FFF', fontSize: 32, fontWeight: 'bold' },
+  restaurantName: { color: '#666', fontSize: 14, marginTop: 5 },
+  section: { paddingHorizontal: 20, marginTop: 30 },
+  sectionLabel: { color: '#444', fontSize: 13, fontWeight: 'bold', marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1 },
+  item: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: '#1A1A1A' },
+  iconBox: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   textContainer: { flex: 1, marginLeft: 15 },
-  itemTitle: { fontSize: 16, fontWeight: '600' },
-  itemSubtitle: { color: '#555', fontSize: 12, marginTop: 2 },
-  versionText: { color: '#222', textAlign: 'center', marginTop: 10, fontSize: 12 },
-  bottomNavContainer: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 15, backgroundColor: '#000', borderTopWidth: 0.5, borderTopColor: '#222' },
-  navItem: { padding: 10 }
+  itemTitle: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  itemSub: { color: '#555', fontSize: 12, marginTop: 2 },
+  
+  // --- Bottom Navigation Style (ความสูงและเส้นอิงตามหน้า Home) ---
+  bottomNavContainer: { 
+    flexDirection: 'row', 
+    backgroundColor: '#000', 
+    height: 65, // เท่ากับ height ในหน้า Home ของคุณ
+    borderTopWidth: 1, 
+    borderTopColor: '#1A1A1A', 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    justifyContent: 'space-around', 
+    alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 15 : 0 
+  },
+  navItem: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    height: '100%'
+  }
 });
